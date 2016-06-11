@@ -1,0 +1,52 @@
+#!/bin/bash
+
+NAME=redis-alpha
+
+for i in $(seq 1 6) ; do 
+  PORT=$((6660 + $i))
+  ROLE=$(redis-cli -p "$PORT" INFO 2>/dev/null | grep role: | awk -F: '{print $2}' | sed -e 's///')
+  if [ x"$ROLE" = x"" ] ; then
+    ROLE=offline
+  fi
+  echo -n "Redis $PORT: $ROLE"
+  if [ x"$ROLE" = x"slave" ] ; then
+    echo -n ' ' \
+      $(redis-cli -p $PORT INFO 2>/dev/null| \
+        grep -E '(master_host|master_port):' | \
+        sed -e 's/^[a-z_]*://' | \
+        sed -e 's///')
+  fi
+  echo
+done
+
+PORT=26379
+for i in $(seq 1 6) ; do
+  PORT=$((7660 + $i))
+MASTER_IP=$(redis-cli -p "$PORT" SENTINEL MASTER "$NAME" 2>/dev/null | \
+  grep -A1 -E '^ip$' | \
+  sed -e 's///' | \
+  tail -1)
+  
+MASTER_PORT=$(redis-cli -p "$PORT" SENTINEL MASTER "$NAME" 2>/dev/null | \
+  grep -A1 -E '^port$' | \
+  sed -e 's///' | \
+  tail -1)
+
+echo "sentinel $PORT"
+echo "  master: $MASTER_IP $MASTER_PORT"
+echo "  slaves: "
+redis-cli -p "$PORT" SENTINEL slaves "$NAME" 2>/dev/null | \
+  grep -E -A1 '^(name|master-host|master-port)$' | \
+  grep -E -v  '^(name|master-host|master-port|--)$' | \
+  sed -e 's///' -e 'N;N;s/\n\(.*\)\n/ -> \1:/' -e 's/^/    /' | \
+  sort
+done
+  
+#redis-cli -p "$PORT" SENTINEL slaves "$NAME" | \
+  #grep -E -A1 '^name$' | \
+  #grep -E -v  '^name$' | \
+  #grep -E -v  '^--'   | \
+  #sed -e 's///' -e 's/^/    /' | \
+  #sort
+
+#redis-cli -p "$PORT" SENTINEL slaves "$NAME"

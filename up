@@ -1,0 +1,63 @@
+#!/bin/bash
+
+function do_up() {
+  name=$1
+  cmd=$2
+  pid_file="pid/$name.pid"
+
+  if [ -e "$pid_file" ] ; then
+    pid=$(ps -p "$(cat "$pid_file")" -o pid --no-headers)
+  else
+    pid=""
+  fi
+
+  if [ x"$pid" = x"" ] ; then
+    echo "Starting $name"
+    $cmd 0<&- &>"log/$name" &
+    echo $! >"$pid_file"
+  else
+    echo "$name: '$pid'"
+  fi
+  
+}
+
+case $1 in
+[1-6])
+  RPORT=$((6660 + $1))
+  SPORT=$((7660 + $1))
+  do_up "r$1" "redis-server --port $RPORT" 
+  do_up "s$1" "redis-server sentinel.conf --sentinel --port $SPORT"
+  sleep 20
+  ;;
+
+r[1-6])
+  RPORT=$((6660 + $(echo "$1" | cut -c 2- )))
+  do_up "$1" "redis-server --port $RPORT" 
+  ;;
+
+s[1-6])
+  SPORT=$((7660 + $(echo "$1" | cut -c 2-)))
+  do_up "$1" "redis-server sentinel.conf --sentinel --port $SPORT"
+  ;;
+
+#sentinel)
+  #do_up "$1" "redis-server sentinel.conf --sentinel"
+  #;;
+
+haproxy)
+  do_up "$1" "haproxy -f haproxy.cfg -db"
+  ;;
+
+#sleep)
+#  sleep 20
+#  ;;
+
+all)
+  for i in $(seq 1 6) ; do
+    bash $0 r$i
+    bash $0 s$i
+  done
+  bash $0 haproxy
+  ;;
+
+esac

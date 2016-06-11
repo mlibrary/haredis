@@ -1,0 +1,23 @@
+#!/bin/bash
+
+NAME=redis-alpha
+PORT=26379
+MASTER_IP=$(redis-cli -p "$PORT" SENTINEL MASTER "$NAME" | \
+  grep -A1 -E '^ip$' | \
+  sed -e 's///' | \
+  tail -1)
+  
+MASTER_PORT=$(redis-cli -p "$PORT" SENTINEL MASTER "$NAME" | \
+  grep -A1 -E '^port$' | \
+  sed -e 's///' | \
+  tail -1)
+
+
+for i in $(seq 1 6) ; do 
+  PORT=$((6660 + $i))
+  if [ x"$PORT" = x"$MASTER_PORT" ] ; then
+    redis-cli -p "$PORT" SLAVEOF NO ONE
+  else
+    redis-cli -p "$PORT" SLAVEOF "$MASTER_IP" "$MASTER_PORT"
+  fi
+done

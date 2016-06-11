@@ -1,0 +1,25 @@
+#!/bin/bash
+
+function do_down() {
+  name=$1
+  pid_file="pid/$name.pid"
+  if [ -e "$pid_file" ] ; then
+    kill "$(cat "$pid_file")"
+    rm "pid/$name.pid"
+  fi
+}
+
+case "$1" in
+r[1-6]|s[1-6]|haproxy)
+  do_down "$1"
+  ;;
+
+all)
+  for i in $(seq 1 6) ; do
+    do_down "r$i"
+    do_down "s$i"
+  done
+  do_down haproxy
+  ;;
+
+esac
