@@ -1,0 +1,64 @@
+global
+  daemon
+  maxconn 256
+
+defaults
+  mode tcp
+  timeout connect 5000ms
+  timeout client 50000ms
+  timeout server 50000ms
+
+frontend http
+  bind :{{haproxy.stats_port}}
+  default_backend stats
+
+backend stats
+  mode http
+  stats enable
+  stats uri /
+  stats refresh 1s
+  stats show-legends
+  stats admin if TRUE
+
+frontend {{redis.cluster}}-service
+  bind *:{{redis.external_port}}
+  default_backend {{redis.cluster}}-primary
+
+backend {{redis.cluster}}-primary
+  mode tcp
+  balance first
+  option tcp-check
+
+  tcp-check send info\ replication\r\n
+  tcp-check expect string role:master
+
+{% for host in groups.redis %}
+  #server {{redis.cluster}}:{{hostvars[host].ansible_default_ipv4.address}}:{{redis.internal_port}} {{hostvars[host].ansible_default_ipv4.address}}:{{redis.internal_port}} maxconn 1024 check inter 1s
+  server {{redis.cluster}}:{{hostvars[host].ansible_eth1.ipv4.address}}:{{redis.internal_port}} {{hostvars[host].ansible_eth1.ipv4.address}}:{{redis.internal_port}} maxconn 1024 check inter 1s
+{% endfor %}
+
+backend {{redis.cluster}}-online
+  mode tcp
+  balance first
+  option tcp-check
+
+  tcp-check send PING\r\n
+  tcp-check expect string +PONG
+
+{% for host in groups.redis %}
+  #server {{redis.cluster}}:{{hostvars[host].ansible_default_ipv4.address}}:{{redis.internal_port}} {{hostvars[host].ansible_default_ipv4.address}}:{{redis.internal_port}} maxconn 1024 check inter 1s
+  server {{redis.cluster}}:{{hostvars[host].ansible_eth1.ipv4.address}}:{{redis.internal_port}} {{hostvars[host].ansible_eth1.ipv4.address}}:{{redis.internal_port}} maxconn 1024 check inter 1s
+{% endfor %}
+
+backend {{redis.cluster}}-sentinel
+  mode tcp
+  balance first
+  option tcp-check
+
+  tcp-check send PING\r\n
+  tcp-check expect string +PONG
+
+{% for host in groups.redis %}
+  #server {{redis.cluster}}:{{hostvars[host].ansible_default_ipv4.address}}:{{redis.sentinel_port}} {{hostvars[host].ansible_default_ipv4.address}}:{{redis.sentinel_port}} maxconn 1024 check inter 1s
+  server {{redis.cluster}}:{{hostvars[host].ansible_eth1.ipv4.address}}:{{redis.sentinel_port}} {{hostvars[host].ansible_eth1.ipv4.address}}:{{redis.sentinel_port}} maxconn 1024 check inter 1s
+{% endfor %}

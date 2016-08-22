@@ -1,0 +1,23 @@
+#!/bin/bash
+
+TEMPLATE="%-8s %-8s %-15s\n"
+
+printf "$TEMPLATE"  host role master-ip
+printf "$TEMPLATE"  ------ ------ ----------
+for HOST in r1 r2 r3
+do
+  ROLE="$(echo "redis-cli -p 6380 INFO" \
+    | vagrant ssh "$HOST" 2>/dev/null \
+    | grep role: \
+    | awk -F: '{print $2}' | sed -e 's/\r//')"
+
+  if [ x"$ROLE" = x"" ] ; then
+    ROLE=offline
+  fi
+
+  MASTER_IP="$(echo "redis-cli -p 6381 SENTINEL MASTER redis" \
+    | vagrant ssh "$HOST" 2>/dev/null \
+    | grep -A1 -E '^ip$' \
+    | tail -1)"
+  printf "$TEMPLATE" "$HOST" "$ROLE" "$MASTER_IP"
+done

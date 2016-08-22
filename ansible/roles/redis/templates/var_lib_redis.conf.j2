@@ -1,0 +1,7 @@
+include /etc/redis/redis.conf
+
+{% if inventory_hostname != groups.redis[0] %}
+{#slaveof {{hostvars[groups.redis[0]].ansible_default_ipv4.address}} {{redis.internal_port}} #}
+slaveof {{hostvars[groups.redis[0]].ansible_eth1.ipv4.address}} {{redis.internal_port}}
+{% endif %}
+

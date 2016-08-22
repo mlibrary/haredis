@@ -1,0 +1,17 @@
+[Unit]
+Description=Redis Sentinel
+After=network.target
+
+[Service]
+PIDFile=/var/run/redis/redis-sentinel
+User=redis
+Group=redis
+
+PermissionsStartOnly=true
+ExecStart=/usr/bin/redis-sentinel /var/lib/redis/sentinel.conf
+ExecReload=/bin/kill -USR2 $MAINPID
+ExecStop=/usr/bin/redis-cli -p {{redis.sentinel_port}} shutdown
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

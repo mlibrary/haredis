@@ -1,0 +1,13 @@
+include /etc/redis/sentinel.conf
+
+{# sentinel monitor {{ redis.cluster }} {{hostvars[groups.redis[0]].ansible_default_ipv4.address}} {{ redis.internal_port }} {{ redis.quorum }} #}
+sentinel monitor {{ redis.cluster }} {{hostvars[groups.redis[0]].ansible_eth1.ipv4.address}} {{ redis.internal_port }} {{ redis.quorum }}
+
+{% for host in groups.redis[1:] %}
+{# sentinel known-slave {{redis.cluster}} {{hostvars[host].ansible_default_ipv4.address}} {{redis.internal_port}} #}
+sentinel known-slave {{redis.cluster}} {{hostvars[host].ansible_eth1.ipv4.address}} {{redis.internal_port}}
+{% endfor %}
+
+sentinel failover-timeout {{redis.cluster}}  1000
+sentinel down-after-milliseconds {{ redis.cluster }} {{ redis.down_after }}
+sentinel notification-script {{ redis.cluster }} /usr/lib/redis/notification.sh

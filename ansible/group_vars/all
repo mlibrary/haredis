@@ -1,0 +1,12 @@
+---
+# Variables listed here are applicable to all host groups.
+
+redis:
+  cluster: redis
+  external_port: 6379
+  internal_port: 6380
+  sentinel_port: 6381
+  quorum: 2
+  down_after: 2000
+haproxy:
+  stats_port:  8080
