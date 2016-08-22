@@ -30,9 +30,9 @@ Once it finishes installing visit [http://localhost:18080/](http://localhost:180
 Or [http://localhost:28080/](http://localhost:28080) to see the haproxy stats for r2.  
 Or [http://localhost:38080/](http://localhost:38080) to see the haproxy stats for r3.
 
-The important bits for the stages pages should be same, but it's worth having all the links if you'll be testing failover by shutting down a host.
+The important bits for the stats pages should be same, but it's worth having all the links if you'll be testing failover by shutting down a host.
 
-The redis primary should be r1 when it first starts up.  The sentinels handle failover, and the runtime configuration for redis keeps track of newly promoted and demoted primaries.
+The redis primary should be r1 when it first starts up.  The sentinels handle failover, and the runtime configuration for redis-server and redis-sentinel keeps track of newly promoted and demoted primaries.
 
 You'll want to monitor the stats page on r2 or r3 since r1 will be down for tests.  To test failover, run `vagrant halt r1`.  The haproxy backend redis-primary should indicate r2 or r3 as healthy.  Bring r1 back with `vagrant up r1`, and you'll see that the redis-primary continues to point at r2.  That's desired.  It's assumed that the data in r1 is now stale and it needs to spend time as a replica.
 
