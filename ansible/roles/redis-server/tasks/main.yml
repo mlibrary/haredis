@@ -19,4 +19,3 @@
     src: 'redis-server.override.conf.j2'
     dest: '/etc/systemd/system/redis-server.service.d/override.conf'
   notify: 'restart redis'
-
