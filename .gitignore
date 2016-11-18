@@ -1,3 +1,9 @@
 /dump.rdb
 /pid
 /log
+
+# Ignore ansible retry files
+*.retry
+
+# Ignore vagrant directory
+.vagrant

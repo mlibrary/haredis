@@ -1,0 +1,7 @@
+---
+- name: print host vars
+  hosts: all
+  tasks:
+    - name: Spit out host vars
+      debug: 
+        var: '{{hostvars[nectar]}}' 

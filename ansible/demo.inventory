@@ -1,0 +1,4 @@
+nectar ansible_ssh_host=nectar.umdl.umich.edu 
+
+[redis_servers]
+nectar

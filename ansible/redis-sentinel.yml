@@ -1,0 +1,18 @@
+---
+# This playbook deploys haproxy + redis
+# Architecture assumptions
+# 1. Each server hosts
+#   a. haproxy
+#   b. redis-sentinel
+#   c. redis
+# 2. Redis is on the non-default port.
+# 3. haproxy is on the default redis port.
+# 4. All of the sentinels talk to each other.
+# 5. The sentinels work with haproxy to
+#    ensure that only one master is in the cluster.
+# TODO:
+#   Consider adding iptables rules.
+
+- name: redis-sentinel
+  roles:
+    - redis-sentinel

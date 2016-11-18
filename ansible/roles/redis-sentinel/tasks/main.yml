@@ -1,0 +1,39 @@
+# 1. Install curl to support notifying HA proxy.
+- name: Install curl
+  apt: name=curl state=present
+
+# Redis-Sentinel is included in redis-server package
+- name: Install redis-server
+  apt: name=redis-server state=present
+
+# 3. Configure redis-sentinel
+- name: Create /usr/lib/redis
+  file: state=directory path=/usr/lib/redis
+
+- name: Install notification.sh
+  template: src=notification.sh.j2 dest=/usr/lib/redis/notification.sh mode=755
+
+- name: Configure redis/sentinel config for /etc/redis/sentinel.conf
+  template: src=sentinel.conf.j2 dest=/etc/redis/sentinel.conf
+  notify: restart sentinel
+
+# /var/lib/redis/sentinel.conf maintains a lot of runtime state, thus force=no.
+- name: Configure redis/sentinel config for /var/lib/redis/sentinel.conf
+  template: 
+    src:   "var_lib_sentinel.conf.j2"
+    dest:  "/var/lib/redis/sentinel.conf"
+    owner: "redis"
+    group: "redis"
+    force: "no"
+  notify: restart sentinel
+
+- name: Install redis/sentinel service
+  template: src=redis-sentinel.service.j2 dest=/lib/systemd/system/redis-sentinel.service
+
+- name: Enable redis/sentinel
+  service: name=redis-sentinel state=started enabled=yes
+
+handlers:
+  - name: restart sentinel
+    service: name=redis-sentinel state=restarted
+

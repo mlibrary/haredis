@@ -1,0 +1,13 @@
+# Redis config overrides
+
+# include the standard config first, then overwrite keys for customization
+include /etc/redis/redis.conf
+
+# Bind to ip in order to server external requests
+bind {{bind_address}}
+
+# If the binding address of this instance is not the same as the master_ip,
+#   then it's a slave of the master_ip 
+{% if bind_address != master_ip %}
+slaveof {{master_ip}} 
+{% endif %}

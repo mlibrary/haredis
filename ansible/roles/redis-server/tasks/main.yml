@@ -1,0 +1,22 @@
+- name: Install redis-server
+  apt: name=redis-server state=present
+
+# Add local config customizations for redis server
+- name: 'Configure redis'
+  template: 
+    src: 'redis.conf.j2'
+    dest: '/etc/redis/redis_custom.conf'
+  notify: 'restart redis'
+
+# Add over-rides for redis-server service installed by package.
+- name: 'Create redis service drop in directory'
+  file: 
+    path: '/etc/systemd/system/redis-server.service.d'
+    state: 'directory'
+
+- name: 'Install redis service overrides in drop in directory'
+  template: 
+    src: 'redis-server.override.conf.j2'
+    dest: '/etc/systemd/system/redis-server.service.d/override.conf'
+  notify: 'restart redis'
+

@@ -1,0 +1,6 @@
+---
+- name: restart redis
+  service: 
+    name: 'redis-server' 
+    daemon_reload: 'yes'
+    state: 'restarted'
